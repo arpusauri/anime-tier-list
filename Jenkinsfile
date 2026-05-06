@@ -1,53 +1,59 @@
 pipeline {
-    agent any
-    
-    environment {
-        DOCKER_USER = "arpusauri" 
-        IMAGE_FRONTEND = "${DOCKER_USER}/anime-frontend:latest"
-        IMAGE_BACKEND = "${DOCKER_USER}/anime-backend:latest"
+    agent {
+        kubernetes {
+            yaml '''
+apiVersion: v1
+kind: Pod
+spec:
+  containers:
+  - name: docker
+    image: docker:24.0.5-dind
+    securityContext:
+      privileged: true
+    env:
+    - name: DOCKER_TLS_CERTDIR
+      value: ""
+  - name: kubectl
+    image: bitnami/kubectl:latest
+    command:
+    - cat
+    tty: true
+'''
+        }
     }
-    
+    environment {
+        DOCKER_HUB_USER = 'arpusauri'
+        DOCKER_CREDENTIALS_ID = 'docker-hub-credentials'
+        AKS_CREDENTIALS_ID = 'aks-kubeconfig'
+    }
     stages {
         stage('1. Checkout Code') {
             steps {
                 checkout scm
             }
         }
-        
         stage('2. Build & Push Docker Images') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'docker-hub-credentials', passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER_CRED')]) {
-                    sh '''
-                    # Login ke Docker Hub
-                    echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER_CRED" --password-stdin
-                    
-                    # Build Image
-                    docker build -t $IMAGE_FRONTEND -f FrontendDockerfile .
-                    docker build -t $IMAGE_BACKEND -f BackendDockerfile .
-                    
-                    # Push Image
-                    docker push $IMAGE_FRONTEND
-                    docker push $IMAGE_BACKEND
-                    '''
+                container('docker') {
+                    withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS_ID}", passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
+                        sh "echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin"
+                        
+                        // Ganti arpusauri dengan username docker hub kamu jika berbeda
+                        sh "docker build -t arpusauri/anime-frontend:latest ./frontend"
+                        sh "docker push arpusauri/anime-frontend:latest"
+                        
+                        sh "docker build -t arpusauri/anime-backend:latest ./backend"
+                        sh "docker push arpusauri/anime-backend:latest"
+                    }
                 }
             }
         }
-        
         stage('3. Deploy to AKS') {
             steps {
-                // Kita gunakan nama variabel KUBECONFIG_FILE agar tidak bentrok dengan sistem
-                withCredentials([file(credentialsId: 'aks-kubeconfig', variable: 'KUBECONFIG_FILE')]) {
-                    sh '''
-                    # Set environment variable KUBECONFIG ke path file secret dari Jenkins
-                    export KUBECONFIG=$KUBECONFIG_FILE
-                    
-                    # Terapkan konfigurasi Kubernetes
-                    kubectl apply -f k8s-manifest.yaml
-                    
-                    # Restart deployment agar image :latest ditarik ulang
-                    kubectl rollout restart deployment anime-frontend
-                    kubectl rollout restart deployment anime-backend
-                    '''
+                container('kubectl') {
+                    withCredentials([file(credentialsId: "${AKS_CREDENTIALS_ID}", variable: 'KUBECONFIG')]) {
+                        sh "kubectl --kubeconfig=\$KUBECONFIG apply -f k8s-manifest.yaml"
+                    }
                 }
             }
         }
