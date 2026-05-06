@@ -6,19 +6,14 @@ apiVersion: v1
 kind: Pod
 spec:
   containers:
-  - name: docker
+  - name: build-tools
     image: docker:24.0.5-dind
     securityContext:
       privileged: true
     env:
     - name: DOCKER_TLS_CERTDIR
       value: ""
-  - name: kubectl
-    image: bitnami/kubectl:latest
-    command:
-    - sleep
-    args:
-    - 99d
+    tty: true
 '''
         }
     }
@@ -28,22 +23,26 @@ spec:
         AKS_CREDENTIALS_ID = 'aks-kubeconfig'
     }
     stages {
-        stage('1. Checkout Code') {
+        stage('1. Checkout & Setup') {
             steps {
-                checkout scm
+                container('build-tools') {
+                    checkout scm
+                    // Install kubectl secara instan di dalam container build-tools
+                    sh """
+                        curl -LO "https://dl.k8s.io/release/\$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+                        chmod +x kubectl
+                        mv kubectl /usr/local/bin/
+                    """
+                }
             }
         }
         stage('2. Build & Push Docker Images') {
             steps {
-                container('docker') {
+                container('build-tools') {
                     withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS_ID}", passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
                         sh "echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin"
-                        
-                        // Build & Push Frontend
                         sh "docker build -t ${DOCKER_HUB_USER}/anime-frontend:latest ./frontend"
                         sh "docker push ${DOCKER_HUB_USER}/anime-frontend:latest"
-                        
-                        // Build & Push Backend (Root directory)
                         sh "docker build -t ${DOCKER_HUB_USER}/anime-backend:latest ."
                         sh "docker push ${DOCKER_HUB_USER}/anime-backend:latest"
                     }
@@ -52,12 +51,9 @@ spec:
         }
         stage('3. Deploy to AKS') {
             steps {
-                container('kubectl') {
+                container('build-tools') {
                     withCredentials([file(credentialsId: "${AKS_CREDENTIALS_ID}", variable: 'KUBECONFIG')]) {
-                        // Menggunakan file manifest yang ada di root repo
                         sh "kubectl apply -f k8s-manifest.yaml --kubeconfig=\$KUBECONFIG"
-                        
-                        // Opsional: Cek status rollout
                         sh "kubectl get pods --kubeconfig=\$KUBECONFIG"
                     }
                 }
@@ -66,10 +62,10 @@ spec:
     }
     post {
         success {
-            echo 'Deployment Berhasil! Silakan cek External IP di Azure Cloud Shell.'
+            echo 'AKHIRNYA! Deployment Berhasil.'
         }
         failure {
-            echo 'Build Gagal. Silakan periksa Console Output.'
+            echo 'Masih gagal? Cek koneksi ke cluster AKS.'
         }
     }
 }
