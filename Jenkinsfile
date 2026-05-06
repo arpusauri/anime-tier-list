@@ -14,7 +14,7 @@ spec:
     - name: DOCKER_TLS_CERTDIR
       value: ""
   - name: kubectl
-    image: bitnami/kubectl:latest
+    image: alpine/k8s:1.28.3
     command: ["cat"]
     tty: true
 '''
@@ -45,20 +45,15 @@ spec:
         stage('Deploy to AKS') {
             steps {
                 container('kubectl') {
-                    // Gunakan variabel KUBECONFIG_CONTENT sebagai 'Secret Text' (bukan file)
-                    // Jika kamu masih pakai 'Secret File', pastikan path-nya benar
                     withCredentials([file(credentialsId: "${AKS_CREDENTIALS_ID}", variable: 'KUBECONFIG_PATH')]) {
-                        script {
-                            sh """
-                                # Copy file ke lokasi yang pasti bisa dibaca
-                                cp ${KUBECONFIG_PATH} /tmp/kubeconfig
-                                export KUBECONFIG=/tmp/kubeconfig
-                                
-                                # Tambahkan timeout agar tidak menggantung tanpa info
-                                kubectl apply -f k8s-manifest.yaml --request-timeout=1m
-                                kubectl get pods
-                            """
-                        }
+                        sh """
+                            cp \$KUBECONFIG_PATH /tmp/kubeconfig
+                            export KUBECONFIG=/tmp/kubeconfig
+                            
+                            kubectl apply -f k8s-manifest.yaml --request-timeout=1m
+                            kubectl get pods
+                            kubectl get svc
+                        """
                     }
                 }
             }

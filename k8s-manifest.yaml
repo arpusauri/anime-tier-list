@@ -24,9 +24,9 @@ spec:
         env:
         # 3. Identity Injection melalui YAML
         - name: NAMA_PRAKTIKAN
-          value: "Nama Kamu" 
+          value: "Arya Purnama Sauri" 
         - name: NIM_PRAKTIKAN
-          value: "12345678"
+          value: "2408521"
 
 ---
 apiVersion: v1

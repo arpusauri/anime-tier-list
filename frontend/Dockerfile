@@ -7,8 +7,8 @@ RUN rm /etc/nginx/conf.d/default.conf
 # Copy konfigurasi nginx custom
 COPY nginx.conf /etc/nginx/conf.d/
 
-# Copy file frontend
-COPY index.html /usr/share/nginx/html/
+# Copy file frontend (PERBAIKI INI - tambahkan style.css)
+COPY index.html style.css /usr/share/nginx/html/
 
 EXPOSE 80
 
