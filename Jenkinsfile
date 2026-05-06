@@ -9,16 +9,18 @@ spec:
   - name: docker
     image: docker:24.0.5-dind
     securityContext:
-      privileged: true
+        privileged: true
     tty: true
     command: ["cat"]
     env:
     - name: DOCKER_TLS_CERTDIR
-      value: ""
-  - name: kubectl
-    image: bitnami/kubectl:latest
-    tty: true
-    command: ["cat"]
+        value: ""
+    - name: kubectl
+        image: bitnami/kubectl:latest
+        tty: true
+        command: ["cat"]
+    - name: DOCKER_HOST
+        value: "tcp://localhost:2375"
 '''
         }
     }
@@ -39,7 +41,7 @@ spec:
                 container('docker') {
                     withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS_ID}", passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
                         sh "echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin"
-                        
+                        sh "docker info"
                         // Build Frontend
                         sh "docker build -t ${DOCKER_HUB_USER}/anime-frontend:latest ./frontend"
                         sh "docker push ${DOCKER_HUB_USER}/anime-frontend:latest"
