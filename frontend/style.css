@@ -1,0 +1,331 @@
+:root {
+    --s: #ff2d55;
+    --a: #ff9f0a;
+    --b: #30d158;
+    --c: #0a84ff;
+    --d: #bf5af2;
+    --bg: #0d0d0f;
+    --card: #18181c;
+    --border: #2a2a32;
+    --text: #f0f0f5;
+    --muted: #6e6e80;
+}
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rajdhani', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+}
+
+/* Background grid */
+body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+        linear-gradient(rgba(255, 45, 85, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 45, 85, 0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+}
+
+.wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 32px 20px 60px;
+}
+
+/* Header */
+header {
+    text-align: center;
+    margin-bottom: 40px;
+    animation: fadeDown .6s ease both;
+}
+
+.header-badge {
+    display: inline-block;
+    background: linear-gradient(135deg, var(--s), #ff6b6b);
+    color: #fff;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 11px;
+    letter-spacing: 3px;
+    padding: 4px 14px;
+    border-radius: 2px;
+    margin-bottom: 12px;
+}
+
+h1 {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: clamp(2.4rem, 6vw, 4rem);
+    letter-spacing: 4px;
+    line-height: 1;
+    background: linear-gradient(135deg, #fff 30%, var(--s));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.identity-card {
+    display: inline-flex;
+    gap: 24px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-top: 2px solid var(--s);
+    border-radius: 6px;
+    padding: 14px 28px;
+    margin-top: 18px;
+    font-size: 14px;
+}
+
+.identity-card span {
+    color: var(--muted);
+    margin-right: 6px;
+}
+
+.identity-card strong {
+    color: var(--text);
+    font-size: 15px;
+}
+
+#owner-name {
+    color: var(--s);
+}
+
+/* Tier section */
+.section-title {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 3px;
+    color: var(--muted);
+    border-bottom: 1px solid var(--border);
+    padding-bottom: 8px;
+    margin-bottom: 16px;
+}
+
+.tier-block {
+    margin-bottom: 10px;
+    animation: fadeUp .5s ease both;
+}
+
+.tier-block:nth-child(1) {
+    animation-delay: .1s
+}
+
+.tier-block:nth-child(2) {
+    animation-delay: .15s
+}
+
+.tier-block:nth-child(3) {
+    animation-delay: .2s
+}
+
+.tier-row {
+    display: flex;
+    align-items: stretch;
+    border-radius: 6px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    min-height: 60px;
+}
+
+.tier-label {
+    width: 56px;
+    min-width: 56px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 2rem;
+    letter-spacing: 2px;
+    color: #000;
+}
+
+.tier-label.s {
+    background: var(--s);
+}
+
+.tier-label.a {
+    background: var(--a);
+}
+
+.tier-label.b {
+    background: var(--b);
+}
+
+.tier-label.c {
+    background: var(--c);
+}
+
+.tier-label.d {
+    background: var(--d);
+}
+
+.tier-items {
+    flex: 1;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 10px 12px;
+    background: var(--card);
+    align-items: center;
+}
+
+.anime-chip {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    transition: all .2s;
+    cursor: default;
+}
+
+.anime-chip:hover {
+    background: rgba(255, 255, 255, 0.1);
+    transform: translateY(-1px);
+}
+
+.anime-chip .genre-tag {
+    font-size: 10px;
+    color: var(--muted);
+    display: block;
+    font-weight: 400;
+}
+
+/* Add form */
+.add-section {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 24px;
+    margin-top: 32px;
+    animation: fadeUp .5s .3s ease both;
+}
+
+.form-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+@media (max-width: 560px) {
+    .form-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.field label {
+    display: block;
+    font-size: 11px;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 6px;
+}
+
+.field input,
+.field select {
+    width: 100%;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    color: var(--text);
+    padding: 10px 12px;
+    font-family: 'Rajdhani', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    outline: none;
+    transition: border-color .2s;
+}
+
+.field input:focus,
+.field select:focus {
+    border-color: var(--s);
+}
+
+.field select option {
+    background: #1a1a1f;
+}
+
+.btn-add {
+    width: 100%;
+    padding: 12px;
+    background: linear-gradient(135deg, var(--s), #ff6b6b);
+    border: none;
+    border-radius: 4px;
+    color: #fff;
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 1.1rem;
+    letter-spacing: 3px;
+    cursor: pointer;
+    transition: opacity .2s, transform .2s;
+}
+
+.btn-add:hover {
+    opacity: .9;
+    transform: translateY(-1px);
+}
+
+.btn-add:active {
+    transform: translateY(0);
+}
+
+#msg {
+    text-align: center;
+    font-size: 13px;
+    margin-top: 10px;
+    height: 18px;
+    color: var(--b);
+    letter-spacing: 1px;
+}
+
+/* Loading skeleton */
+.skeleton {
+    background: linear-gradient(90deg, var(--border) 25%, #2e2e38 50%, var(--border) 75%);
+    background-size: 200% 100%;
+    animation: shimmer 1.2s infinite;
+    border-radius: 4px;
+    height: 14px;
+}
+
+@keyframes shimmer {
+    to {
+        background-position: -200% 0;
+    }
+}
+
+@keyframes fadeDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px)
+    }
+
+    to {
+        opacity: 1;
+        transform: none
+    }
+}
+
+@keyframes fadeUp {
+    from {
+        opacity: 0;
+        transform: translateY(16px)
+    }
+
+    to {
+        opacity: 1;
+        transform: none
+    }
+}

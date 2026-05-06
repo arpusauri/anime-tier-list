@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="id">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Anime Tier List</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Noto+Sans+JP:wght@400;700&family=Rajdhani:wght@400;600;700&display=swap"
+        rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div class="wrapper">
+
+        <header>
+            <div class="header-badge">ANIME TIER LIST</div>
+            <h1>KOLEKSI ANIME<br>TERBAIK</h1>
+            <div class="identity-card">
+                <div><span>PEMILIK</span><strong id="owner-name">—</strong></div>
+                <div><span>NIM</span><strong id="owner-nim">—</strong></div>
+            </div>
+        </header>
+
+        <p class="section-title">TIER RANKING</p>
+        <div id="tier-container">
+            <div style="padding:20px; text-align:center; color:var(--muted);">Memuat data...</div>
+        </div>
+
+        <div class="add-section">
+            <p class="section-title">TAMBAH ANIME BARU</p>
+            <div class="form-grid">
+                <div class="field">
+                    <label>JUDUL ANIME</label>
+                    <input type="text" id="inp-judul" placeholder="Misal: Vinland Saga" />
+                </div>
+                <div class="field">
+                    <label>GENRE</label>
+                    <input type="text" id="inp-genre" placeholder="Misal: Historical/Action" />
+                </div>
+                <div class="field">
+                    <label>TIER</label>
+                    <select id="inp-tier">
+                        <option value="S">S — Masterpiece</option>
+                        <option value="A">A — Sangat Bagus</option>
+                        <option value="B">B — Bagus</option>
+                        <option value="C">C — Cukup</option>
+                        <option value="D">D — Biasa</option>
+                    </select>
+                </div>
+                <div class="field">
+                    <label>TAHUN RILIS</label>
+                    <input type="number" id="inp-tahun" placeholder="Misal: 2022" min="1960" max="2030" />
+                </div>
+            </div>
+            <button class="btn-add" onclick="addAnime()">+ TAMBAH KE TIER LIST</button>
+            <div id="msg"></div>
+        </div>
+
+    </div>
+
+    <script>
+        // Config API
+        const API_BASE = '';
+
+        const TIER_ORDER = ['S', 'A', 'B', 'C', 'D'];
+        const TIER_COLORS = { S: 's', A: 'a', B: 'b', C: 'c', D: 'd' };
+
+        // Fetch data
+        async function loadData() {
+            try {
+                const res = await fetch(`${API_BASE}/api/info`);
+                const data = await res.json();
+                document.getElementById('owner-name').textContent = data.pemilik || 'Misterius';
+                document.getElementById('owner-nim').textContent = data.nim || '00000000';
+                renderTiers(data.items || []);
+            } catch (e) {
+                document.getElementById('tier-container').innerHTML =
+                    `<p style="color:var(--s);text-align:center;padding:20px">Gagal memuat data. Pastikan backend berjalan.</p>`;
+            }
+        }
+
+        // Render
+        function renderTiers(items) {
+            const grouped = {};
+            TIER_ORDER.forEach(t => grouped[t] = []);
+            items.forEach(item => {
+                const tier = (typeof item === 'object' ? item.tier : null) || 'C';
+                if (!grouped[tier]) grouped[tier] = [];
+                grouped[tier].push(item);
+            });
+
+            const container = document.getElementById('tier-container');
+            container.innerHTML = '';
+            TIER_ORDER.forEach(tier => {
+                if (!grouped[tier].length) return;
+                const block = document.createElement('div');
+                block.className = 'tier-block';
+                block.innerHTML = `
+        <div class="tier-row">
+          <div class="tier-label ${TIER_COLORS[tier]}">${tier}</div>
+          <div class="tier-items">
+            ${grouped[tier].map(it => chipHTML(it)).join('')}
+          </div>
+        </div>`;
+                container.appendChild(block);
+            });
+        }
+
+        function chipHTML(item) {
+            if (typeof item === 'string') return `<div class="anime-chip">${item}</div>`;
+            return `
+      <div class="anime-chip">
+        ${item.judul || item}
+        ${item.genre ? `<span class="genre-tag">${item.genre}${item.tahun ? ' · ' + item.tahun : ''}</span>` : ''}
+      </div>`;
+        }
+
+        // Add anime
+        async function addAnime() {
+            const judul = document.getElementById('inp-judul').value.trim();
+            const genre = document.getElementById('inp-genre').value.trim();
+            const tier = document.getElementById('inp-tier').value;
+            const tahun = parseInt(document.getElementById('inp-tahun').value) || null;
+
+            if (!judul) { showMsg('Judul tidak boleh kosong!', 'var(--s)'); return; }
+
+            const payload = { item: { judul, genre, tier, tahun } };
+            try {
+                const res = await fetch(`${API_BASE}/api/add-item`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    showMsg('✓ Anime berhasil ditambahkan!', 'var(--b)');
+                    document.getElementById('inp-judul').value = '';
+                    document.getElementById('inp-genre').value = '';
+                    document.getElementById('inp-tahun').value = '';
+                    loadData();
+                } else {
+                    showMsg('Gagal menambahkan.', 'var(--s)');
+                }
+            } catch (e) {
+                showMsg('Tidak dapat terhubung ke backend.', 'var(--s)');
+            }
+        }
+
+        function showMsg(text, color = 'var(--b)') {
+            const el = document.getElementById('msg');
+            el.style.color = color;
+            el.textContent = text;
+            setTimeout(() => el.textContent = '', 3000);
+        }
+
+        loadData();
+    </script>
+</body>
+
+</html>

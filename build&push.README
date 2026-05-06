@@ -1,0 +1,13 @@
+# backend
+docker build -f Dockerfile.backend -t arpusauri/anime-backend:latest .
+docker push arpusauri/anime-backend:latest
+
+# frontend
+cd frontend
+docker build -f Dockerfile.frontend -t arpusauri/anime-frontend:latest .
+docker push arpusauri/anime-frontend:latest
+
+# api
+http://20.212.124.37:5000/api/info
+# frontend
+http://animetierlist.a7f5hrbkg4ggcpfe.southeastasia.azurecontainer.io/
