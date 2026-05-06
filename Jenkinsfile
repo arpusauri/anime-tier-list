@@ -43,17 +43,22 @@ spec:
         }
         stage('Deploy') {
             steps {
-                container('kubectl') {
+                // Kita gunakan container default (jnlp) saja agar lebih stabil
+                container('jnlp') { 
                     withCredentials([file(credentialsId: "${AKS_CREDENTIALS_ID}", variable: 'KUBECONFIG')]) {
-                        // Tambahkan sleep 2 detik sebelum perintah kubectl untuk stabilitas
-                        sh "sleep 2"
-                        sh "kubectl apply -f k8s-manifest.yaml --kubeconfig=\$KUBECONFIG"
-                        sh "kubectl get pods --kubeconfig=\$KUBECONFIG"
+                        script {
+                            // Kita install kubectl secara instan di dalam agent
+                            sh """
+                                curl -LO "https://dl.k8s.io/release/\$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
+                                chmod +x kubectl
+                                ./kubectl apply -f k8s-manifest.yaml --kubeconfig=${KUBECONFIG}
+                                ./kubectl get pods --kubeconfig=${KUBECONFIG}
+                            """
+                        }
                     }
                 }
             }
         }
-    }
     post {
         success {
             echo 'BERHASIL TOTAL! Cek External IP di Azure sekarang.'
