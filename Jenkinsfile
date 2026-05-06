@@ -45,9 +45,20 @@ spec:
         stage('Deploy to AKS') {
             steps {
                 container('kubectl') {
-                    withCredentials([file(credentialsId: "${AKS_CREDENTIALS_ID}", variable: 'KUBECONFIG')]) {
-                        sh "kubectl apply -f k8s-manifest.yaml --kubeconfig=\$KUBECONFIG"
-                        sh "kubectl get pods --kubeconfig=\$KUBECONFIG"
+                    // Gunakan variabel KUBECONFIG_CONTENT sebagai 'Secret Text' (bukan file)
+                    // Jika kamu masih pakai 'Secret File', pastikan path-nya benar
+                    withCredentials([file(credentialsId: "${AKS_CREDENTIALS_ID}", variable: 'KUBECONFIG_PATH')]) {
+                        script {
+                            sh """
+                                # Copy file ke lokasi yang pasti bisa dibaca
+                                cp ${KUBECONFIG_PATH} /tmp/kubeconfig
+                                export KUBECONFIG=/tmp/kubeconfig
+                                
+                                # Tambahkan timeout agar tidak menggantung tanpa info
+                                kubectl apply -f k8s-manifest.yaml --request-timeout=1m
+                                kubectl get pods
+                            """
+                        }
                     }
                 }
             }
