@@ -6,14 +6,19 @@ apiVersion: v1
 kind: Pod
 spec:
   containers:
-  - name: build-tools
+  - name: docker
     image: docker:24.0.5-dind
     securityContext:
       privileged: true
+    tty: true
+    command: ["cat"]
     env:
     - name: DOCKER_TLS_CERTDIR
       value: ""
+  - name: kubectl
+    image: bitnami/kubectl:latest
     tty: true
+    command: ["cat"]
 '''
         }
     }
@@ -23,26 +28,23 @@ spec:
         AKS_CREDENTIALS_ID = 'aks-kubeconfig'
     }
     stages {
-        stage('1. Checkout & Setup') {
+        stage('1. Checkout Code') {
             steps {
-                container('build-tools') {
-                    checkout scm
-                    // Install kubectl secara instan di dalam container build-tools
-                    sh """
-                        curl -LO "https://dl.k8s.io/release/\$(curl -L -s https://dl.k8s.io/release/stable.txt)/bin/linux/amd64/kubectl"
-                        chmod +x kubectl
-                        mv kubectl /usr/local/bin/
-                    """
-                }
+                // Checkout dilakukan di luar container block agar menggunakan default jnlp agent
+                checkout scm
             }
         }
         stage('2. Build & Push Docker Images') {
             steps {
-                container('build-tools') {
+                container('docker') {
                     withCredentials([usernamePassword(credentialsId: "${DOCKER_CREDENTIALS_ID}", passwordVariable: 'DOCKER_PASS', usernameVariable: 'DOCKER_USER')]) {
                         sh "echo \$DOCKER_PASS | docker login -u \$DOCKER_USER --password-stdin"
+                        
+                        // Build Frontend
                         sh "docker build -t ${DOCKER_HUB_USER}/anime-frontend:latest ./frontend"
                         sh "docker push ${DOCKER_HUB_USER}/anime-frontend:latest"
+                        
+                        // Build Backend (File ada di root)
                         sh "docker build -t ${DOCKER_HUB_USER}/anime-backend:latest ."
                         sh "docker push ${DOCKER_HUB_USER}/anime-backend:latest"
                     }
@@ -51,8 +53,9 @@ spec:
         }
         stage('3. Deploy to AKS') {
             steps {
-                container('build-tools') {
+                container('kubectl') {
                     withCredentials([file(credentialsId: "${AKS_CREDENTIALS_ID}", variable: 'KUBECONFIG')]) {
+                        // Gunakan --kubeconfig agar kubectl tahu cluster mana yang dituju
                         sh "kubectl apply -f k8s-manifest.yaml --kubeconfig=\$KUBECONFIG"
                         sh "kubectl get pods --kubeconfig=\$KUBECONFIG"
                     }
@@ -62,10 +65,10 @@ spec:
     }
     post {
         success {
-            echo 'AKHIRNYA! Deployment Berhasil.'
+            echo 'YES! Berhasil dideploy ke AKS.'
         }
         failure {
-            echo 'Masih gagal? Cek koneksi ke cluster AKS.'
+            echo 'Build gagal, periksa kembali log di atas.'
         }
     }
 }
