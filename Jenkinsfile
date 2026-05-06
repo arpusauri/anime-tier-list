@@ -42,7 +42,7 @@ spec:
                         sh "docker build -t arpusauri/anime-frontend:latest ./frontend"
                         sh "docker push arpusauri/anime-frontend:latest"
                         
-                        sh "docker build -t arpusauri/anime-backend:latest ./backend"
+                        sh "docker build -t arpusauri/anime-backend:latest ."
                         sh "docker push arpusauri/anime-backend:latest"
                     }
                 }
