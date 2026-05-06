@@ -18,7 +18,7 @@ spec:
     spec:
       containers:
       - name: backend
-        image: <DOCKER_USERNAME>/anime-backend:latest # Ganti dengan username DockerHub kamu
+        image: arpusauri/anime-backend:latest # Ganti dengan username DockerHub kamu
         ports:
         - containerPort: 5000
         env:
@@ -61,7 +61,7 @@ spec:
     spec:
       containers:
       - name: frontend
-        image: <DOCKER_USERNAME>/anime-frontend:latest # Ganti dengan username DockerHub kamu
+        image: arpusauri/anime-frontend:latest # Ganti dengan username DockerHub kamu
         ports:
         - containerPort: 80
 
