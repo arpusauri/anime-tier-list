@@ -2,7 +2,7 @@ pipeline {
     agent any
     
     environment {
-        DOCKER_USER = "arpusauri" // Ganti dengan username Docker Hub
+        DOCKER_USER = "arpusauri" 
         IMAGE_FRONTEND = "${DOCKER_USER}/anime-frontend:latest"
         IMAGE_BACKEND = "${DOCKER_USER}/anime-backend:latest"
     }
@@ -10,7 +10,6 @@ pipeline {
     stages {
         stage('1. Checkout Code') {
             steps {
-                // Mengambil kode dari GitHub (secara default akan menggunakan repo tempat Jenkinsfile ini berada)
                 checkout scm
             }
         }
@@ -26,7 +25,7 @@ pipeline {
                     docker build -t $IMAGE_FRONTEND -f FrontendDockerfile .
                     docker build -t $IMAGE_BACKEND -f BackendDockerfile .
                     
-                    # Push Image ke Registry
+                    # Push Image
                     docker push $IMAGE_FRONTEND
                     docker push $IMAGE_BACKEND
                     '''
@@ -36,14 +35,16 @@ pipeline {
         
         stage('3. Deploy to AKS') {
             steps {
-                withCredentials([file(credentialsId: 'aks-kubeconfig', variable: 'KUBECONFIG')]) {
+                // Kita gunakan nama variabel KUBECONFIG_FILE agar tidak bentrok dengan sistem
+                withCredentials([file(credentialsId: 'aks-kubeconfig', variable: 'KUBECONFIG_FILE')]) {
                     sh '''
-                    export KUBECONFIG=$KUBECONFIG
+                    # Set environment variable KUBECONFIG ke path file secret dari Jenkins
+                    export KUBECONFIG=$KUBECONFIG_FILE
                     
-                    # Aplikasikan file YAML ke cluster Kubernetes
+                    # Terapkan konfigurasi Kubernetes
                     kubectl apply -f k8s-manifest.yaml
                     
-                    # Restart deployment agar selalu pull image terbaru jika menggunakan tag :latest
+                    # Restart deployment agar image :latest ditarik ulang
                     kubectl rollout restart deployment anime-frontend
                     kubectl rollout restart deployment anime-backend
                     '''
